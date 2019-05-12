@@ -2,49 +2,54 @@
 using System.Data.SqlClient;
 using System.Windows.Controls;
 using System.Windows.Threading;
+using UniVoting.Core;
 using UniVoting.Services;
 
 namespace UniVoting.LiveView
 {
+    /// <inheritdoc cref="UserControl" />
     /// <summary>
     /// Interaction logic for TileControlSmall.xaml
     /// </summary>
     public partial class TileControlSmall : UserControl
     {
-        private DispatcherTimer _timer;
-        private string _position;
-        public TileControlSmall(String position)
+        private readonly Position _position;
+        private readonly ILiveViewService _liveViewService;
+        //  private readonly ILogger _logger;
+        public TileControlSmall(Position position,ILiveViewService liveViewService)
         {
-            InitializeComponent();
-           
-            _timer = new DispatcherTimer();
-            _timer.Interval = new TimeSpan(0, 0, 0, 1);
-            _timer.Tick += _timer_Tick;
-            _timer.Start();
             _position = position;
-            Position.Text = _position.ToUpper();
+            _liveViewService = liveViewService;
+            InitializeComponent();
+            //  _logger=new SystemEventLoggerService();
+            var timer = new DispatcherTimer
+            {
+                Interval = new TimeSpan(0, 0, 0, 1)
+            };
+            timer.Tick += _timer_Tick;
+            timer.Start();
+            Position.Text = _position.PositionName.ToUpper();
         }
 
         private async void _timer_Tick(object sender, EventArgs e)
         {
             try
             {
-                VoteCount.Text = $"{await LiveViewService.VotesSkipppedCountAsync(_position)}";
+                VoteCount.Text = $"{await _liveViewService.VotesSkipppedCountAsync(_position.Id)}";
             }
-            catch (SqlException exception)
+            catch (SqlException)
             {
-                Console.WriteLine(exception);
-                //show connection Error
+                //  _logger.Log(exception);
+
             }
-            catch (Exception exception)
+            catch (Exception )
             {
-                Console.WriteLine(exception);
-               // throw;
+                //  _logger.Log(exception);
             }
-            finally
-            {
-                VoteCount.Text = $"{await LiveViewService.VotesSkipppedCountAsync(_position)}";
-            }
+            //finally
+            //{
+            //    VoteCount.Text = $"{await LiveViewService.VotesSkipppedCountAsync(_position)}";
+            //}
 
         }
     }

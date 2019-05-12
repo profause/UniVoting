@@ -1,16 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
+using Autofac;
 using Microsoft.Win32;
-using UniVoting.Data.Implementations;
-using UniVoting.Model;
-using UniVoting.Services;
+using Univoting.Services;
+using UniVoting.Admin.Startup;
+using UniVoting.Core;
 
-namespace UniVoting.WPF.Administrators
+namespace UniVoting.Admin.Administrators
 {
 	/// <inheritdoc />
 	/// <summary>
@@ -21,6 +21,9 @@ namespace UniVoting.WPF.Administrators
 	
 	public partial class AdminSetUpCandidatesPage : Page
 	{
+		private readonly IElectionConfigurationService _electionConfigurationService;
+
+	
 		internal class CandidateDto
 		{
 			public CandidateDto()
@@ -49,24 +52,26 @@ namespace UniVoting.WPF.Administrators
 		}
 		internal  ObservableCollection<CandidateDto> Candidates =new ObservableCollection<CandidateDto>();
 		
-		private List<int> _rank;
 		private int _candidateId;
 		public AdminSetUpCandidatesPage()
 		{
-			this._candidateId = 0;
+			_candidateId = 0;
 			InitializeComponent();
 			SaveCandidate.Click += SaveCandidate_Click;
 			#region RankGeneration
-			_rank = new List<int>();
-			for (int i = 1; i <= 10; ++i)
-			{
-				_rank.Add(i);
-			}
-			RankCombo.ItemsSource = _rank; 
-			#endregion
-		}
+			//_rank = new List<int>();
+			//for (int i = 1; i <= 10; ++i)
+			//{
+			//	_rank.Add(i);
+			//}
+			//RankCombo.ItemsSource = _rank;
+            #endregion
 
-		private async void SaveCandidate_Click(object sender, RoutedEventArgs e)
+            var container = new BootStrapper().BootStrap();
+            _electionConfigurationService = container.Resolve<IElectionConfigurationService>();
+        }
+
+        private async void SaveCandidate_Click(object sender, RoutedEventArgs e)
 		{
 			if (!string.IsNullOrWhiteSpace(CandidateName.Text)||!string.IsNullOrWhiteSpace(PositionCombo.Text)
 				||!string.IsNullOrWhiteSpace(RankCombo.Text)||!string.IsNullOrWhiteSpace(RankCombo.Text)
@@ -79,13 +84,12 @@ namespace UniVoting.WPF.Administrators
 					Id = _candidateId,
 					CandidateName = CandidateName.Text,
 					CandidatePicture = Util.ConvertToBytes(CandidateImage),
-					PositionId = (int) PositionCombo.SelectedValue,
-					RankId = (int) RankCombo.SelectedValue
+					PositionId =PositionCombo.SelectedValue as int?,
+					RankId =  RankCombo.SelectedValue as int?
 				};
-				 await ElectionConfigurationService.SaveCandidate(candidate);
+				 await _electionConfigurationService.SaveCandidateAsync(candidate);
 				Util.Clear(this);
 				CandidateImage.Source=new BitmapImage(new Uri("../Resources/images/people_on_the_beach_300x300.jpg", UriKind.Relative));
-				PositionCombo.ItemsSource = await ElectionConfigurationService.GetAllPositionsAsync();
 				RefreshCandidateList();
 
 
@@ -95,13 +99,16 @@ namespace UniVoting.WPF.Administrators
 
 		private async void Page_Loaded(object sender, RoutedEventArgs e)
 		{
-			PositionCombo.ItemsSource = await ElectionConfigurationService.GetAllPositionsAsync();
-			RefreshCandidateList();
+			PositionCombo.ItemsSource = await _electionConfigurationService.GetAllPositionsAsync();
+            RankCombo.ItemsSource = await _electionConfigurationService.GetAllRanksAsync();
+
+            RefreshCandidateList();
 		}
 
 		private async void RefreshCandidateList()
 		{
-			var candidates = await new ElectionConfigurationService().GetCandidateWithDetails();
+            Candidates.Clear();
+			var candidates = await  _electionConfigurationService.GetCandidateWithDetailsAsync();
 			foreach (var candidate in candidates)
 			{
 				var newcandidate = new CandidateDto(candidate.Id,Convert.ToInt32(candidate.PositionId)

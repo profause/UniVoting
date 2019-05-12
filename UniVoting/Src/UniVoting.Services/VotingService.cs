@@ -1,81 +1,126 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Linq;
 using System.Threading.Tasks;
-using UniVoting.Data.Implementations;
-using UniVoting.Data.Interfaces;
-using UniVoting.Model;
+using Microsoft.EntityFrameworkCore;
+using Univoting.Data;
+using UniVoting.Core;
+using UniVoting.Services;
 
-namespace UniVoting.Services
+namespace Univoting.Services
 {
-	public class VotingService
-	{
-		private static IService _electionservice=new ElectionService();
+    public class VotingService : IVotingService
+    {
+        private readonly ElectionDbContext _context;
 
-		
-		public static async Task SkipVote(SkippedVotes skipped)
-		{
-			try
-			{
-				await _electionservice.Voters.InsertSkippedVotes(skipped);
+        public VotingService(ElectionDbContext context)
+        {
+            _context = context;
+        }
+        //private static readonly ILogger Logger=new SystemEventLoggerService();
+        //private static readonly IService _context = new _context();
 
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine(e);
-				throw;
-			}
-		}
-		public static async Task CastVote(List<Vote> votes,Voter voter,List<SkippedVotes> skippedVotes)
-		{
-			try
-			{
-				await _electionservice.Voters.InsertBulkVotes(votes, voter,skippedVotes);
+        public async Task SkipVote(SkippedVote skipped)
+        {
+            try
+            {
+                await _context.SkippedVotes.AddAsync(skipped);
+            }
+            catch (Exception exception)
+            {
+                throw new Exception("Something went wrong. we could not Skip Votes", exception);
 
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine(e);
-				throw;
-			}
-		}
-		public static async Task UpdateVoter(Voter voter)
-		{
-			try
-			{
-				await _electionservice.Voters.UpdateAsync(voter);
+            }
+        }
 
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine(e);
-				throw;
-			}
-		}
-		public static async Task ResetVoter(Voter voter)
-		{
-			try
-			{
-				await _electionservice.Voters.ResetVoter(voter);
+        public async Task CastVote(ConcurrentBag<Vote> votes, Voter voter, ConcurrentBag<SkippedVote> skippedVotes)
+        {
+            try
+            {
 
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine(e);
-				throw;
-			}
-		}
-		public static async Task<Voter> GetVoterPass(Voter voter)
-		{
-			try
-			{
-				return	await _electionservice.Voters.GetVoterPass(voter);
 
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine(e);
-				throw;
-			}
-		}
-	}
+                using (var transaction = _context.Database.BeginTransaction())
+                {
+
+                    var result = await _context.Voters.FindAsync(voter.Id);
+                    result.Voted = true; 
+                    result.VoteInProgress = false;
+                    _context.Voters.Update(result);
+
+                    //actual submission of votes and skipped
+
+                    await _context.Votes.AddRangeAsync(votes);
+                    await _context.SkippedVotes.AddRangeAsync(skippedVotes);
+                   await _context.SaveChangesAsync();
+                    transaction.Commit();
+                }
+            }
+            catch (Exception exception)
+            {
+                await ResetVoter(voter);
+                throw new Exception("Something went wrong. we could not submit user votes", exception);
+
+            }
+        }
+
+        public async Task UpdateVoter(Voter voter)
+        {
+            try
+            {
+                var result = await _context.Voters.FindAsync(voter.Id);
+                result.VoteInProgress = voter.VoteInProgress;
+                _context.Voters.Update(result);
+                _context.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Something went wrong. we could not update Voter status", e);
+
+            }
+        }
+
+        public async Task ResetVoter(Voter voter)
+        {
+            try
+            {
+                using (var transaction = _context.Database.BeginTransaction())
+                {
+                    var dbvoter =await _context.Voters.FirstOrDefaultAsync(x => x.IndexNumber == voter.IndexNumber);
+                    if (dbvoter == null) throw new ArgumentNullException(nameof(dbvoter));
+                   
+
+                    var votes = _context.Votes.Where(x => x.VoterId == dbvoter.Id).ToList();
+                    var skippedVotes = _context.SkippedVotes.Where(x => x.VoterId == dbvoter.Id);
+                    _context.Votes.RemoveRange(votes);
+                    _context.SkippedVotes.RemoveRange(skippedVotes);
+                    _context.SkippedVotes.RemoveRange(skippedVotes);
+                    dbvoter.VoteInProgress = false;
+                    dbvoter.Voted = false;
+                    _context.Voters.Update(dbvoter);
+
+                    await _context.SaveChangesAsync();
+                    transaction.Commit();
+                }
+            }
+            catch (Exception exception)
+            {
+                throw new Exception("Something went wrong. we could not Reset Voter status", exception);
+
+            }
+        }
+
+        public async Task<Voter> GetVoterPass(string indexNumber)
+        {
+            try
+            {
+                return await _context.Voters.FirstOrDefaultAsync(x => x.IndexNumber.Contains(indexNumber));
+            }
+            catch (Exception exception)
+            {
+
+                throw new Exception("Something went wrong. we could not retrieve password", exception);
+
+            }
+        }
+    }
 }

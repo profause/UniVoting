@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Media;
+using Autofac;
 using MahApps.Metro;
-using UniVoting.WPF.Administrators;
-using UniVoting.WPF.StatUp;
+using UniVoting.Admin.Administrators;
+using UniVoting.Admin.Startup;
 
-namespace UniVoting.WPF
+namespace UniVoting.Admin
 {
 	/// <summary>
 	/// Interaction logic for App.xaml
@@ -15,20 +16,21 @@ namespace UniVoting.WPF
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
-			var bootstrapper = new BootStrapper();
-			var container = bootstrapper.BootStrap();
+			
 			// add custom accent and theme resource dictionaries
-			ThemeManager.AddAccent("CustomAccent1", new Uri("pack://application:,,,/UniVoting.WPF;component/CustomAccents/CustomAccent.xaml"));
+			ThemeManager.AddAccent("CustomAccent1", new Uri("pack://application:,,,/UniVoting.Admin;component/CustomAccents/CustomAccent.xaml"));
 
-			// create custom accents
-			ThemeManagerHelper.CreateAppStyleBy(Colors.Red);
-			ThemeManagerHelper.CreateAppStyleBy(Colors.GreenYellow);
-			ThemeManagerHelper.CreateAppStyleBy(Colors.Indigo, true);
+            // create custom accents
+            ThemeManagerHelper.CreateAppStyleBy(Colors.Red);
+            ThemeManagerHelper.CreateAppStyleBy(Colors.GreenYellow);
+            ThemeManagerHelper.CreateAppStyleBy(Colors.Indigo, true);
 
+            var bootStrapper = new BootStrapper();
+            var container = bootStrapper.BootStrap();
+            var window = container.Resolve<AdminLoginWindow>();
 
-
-			MainWindow=new AdminLoginWindow();
-			MainWindow.Show();
+            MainWindow = window;
+			MainWindow?.Show();
 			base.OnStartup(e);
 		}
 

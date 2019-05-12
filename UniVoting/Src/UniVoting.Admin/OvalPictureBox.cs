@@ -4,7 +4,7 @@ using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using Color = System.Drawing.Color;
 
-namespace UniVoting.WPF
+namespace UniVoting.Admin
 {
     class OvalPictureBox : PictureBox
     {
@@ -17,8 +17,8 @@ namespace UniVoting.WPF
             base.OnResize(e);
             using (var gp = new GraphicsPath())
             {
-                gp.AddEllipse(new System.Drawing.Rectangle(0, 0, this.Width - 1, this.Height - 1));
-                this.Region = new Region(gp);
+                gp.AddEllipse(new Rectangle(0, 0, Width - 1, Height - 1));
+                Region = new Region(gp);
             }
         }
     }

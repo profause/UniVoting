@@ -1,34 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using Autofac;
 using MahApps.Metro.Controls;
 using MahApps.Metro.Controls.Dialogs;
-using Telerik.ReportViewer.Common;
-using UniVoting.Model;
-using UniVoting.Services;
+using Univoting.Services;
+using UniVoting.Admin.Startup;
+using UniVoting.Core;
 
-namespace UniVoting.WPF.Administrators
+namespace UniVoting.Admin.Administrators
 {
 	/// <summary>
 	/// Interaction logic for AdminDispensePasswordWindow.xaml
 	/// </summary>
 	public partial class AdminDispensePasswordWindow : MetroWindow
 	{
+		private readonly IElectionConfigurationService _electionConfigurationService;
 		private List<Voter> voters;
 		public AdminDispensePasswordWindow()
 		{
-			InitializeComponent();
+		    var container = new BootStrapper().BootStrap();
+		    _electionConfigurationService = container.Resolve<IElectionConfigurationService>();
+            InitializeComponent();
 			Loaded += AdminDispensePasswordWindow_Loaded;
 			StudentName.TextChanged += StudentName_TextChanged;
 			StudentsSearchList.MouseDoubleClick += StudentsSearchList_MouseDoubleClick;
@@ -42,7 +37,7 @@ namespace UniVoting.WPF.Administrators
 
 		private async void StudentsSearchList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
 		{
-			var metroWindow = (Window.GetWindow(this) as MetroWindow);
+			var metroWindow = (GetWindow(this) as MetroWindow);
 			var student = StudentsSearchList.SelectedItem as Voter;
 			if (student!=null)
 			{
@@ -71,7 +66,7 @@ namespace UniVoting.WPF.Administrators
 		private async void RefreshStudentList()
 		{
 			voters = new List<Voter>();
-		voters=(List<Voter>) await	ElectionConfigurationService.GetAllVotersAsync();
+		voters=(List<Voter>) await	_electionConfigurationService.GetAllVotersAsync();
 			StudentsSearchList.ItemsSource = voters;
 		}
 	}

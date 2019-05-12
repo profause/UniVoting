@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Transactions;
-using Dapper;
 using UniVoting.Model;
 
 namespace UniVoting.Data.Implementations
@@ -30,7 +29,7 @@ namespace UniVoting.Data.Implementations
 					}
 					catch (Exception)
 					{
-						// ignored
+						transaction.Dispose();
 					}
 
 				}
@@ -48,7 +47,7 @@ namespace UniVoting.Data.Implementations
 				{
 					try
 					{
-						count = await connection.ExecuteAsync(@"INSERT INTO dbo.Voter(VoterName ,VoterCode ,IndexNumber) VALUES(@VoterName,@VoterCode,@IndexNumber)", member);
+						count = await connection.ExecuteAsync(@"INSERT INTO dbo.Voter(VoterName ,VoterCode ,IndexNumber,Faculty) VALUES(@VoterName,@VoterCode,@IndexNumber,@Faculty)", member);
 						transaction.Complete();
 					}
 					catch (Exception)
@@ -83,9 +82,8 @@ namespace UniVoting.Data.Implementations
 
 
 		}
-		public  async Task<int> InsertBulkVotes(List<Vote> votes, Voter voter, List<SkippedVotes> skippedVotes)
+		public  async Task InsertBulkVotes(IEnumerable<Vote> votes, Voter voter, IEnumerable<SkippedVote> skippedVotes)
 		{
-			var task = 0;
 			using (var transaction = new TransactionScope())
 			{
 				try
@@ -93,7 +91,7 @@ namespace UniVoting.Data.Implementations
 					using (var connection = new DbManager(connectionName).Connection)
 					{
 						//save votes
-						task = (int)await connection.ExecuteAsync(@"INSERT INTO dbo.Vote(VoterID ,CandidateID ,PositionID)VALUES(@VoterID,@CandidateID,@PositionID)", votes);
+					    await connection.ExecuteAsync(@"INSERT INTO dbo.Vote(VoterID ,CandidateID ,PositionID)VALUES(@VoterID,@CandidateID,@PositionID)", votes);
 						//save skipped
 						await connection.ExecuteAsync(@"INSERT INTO dbo.SkippedVotes(Positionid,VoterId)VALUES(@Positionid,@VoterId)", skippedVotes);
 						//update voter					
@@ -108,13 +106,13 @@ namespace UniVoting.Data.Implementations
 					await ResetVoter(voter);
 				}
 			}
-			return task;
+			
 		}
 		public  async Task<Voter> Login(Voter voter)
 		{
 			using (var connection = new DbManager(connectionName).Connection)
 			{
-				return await connection.QueryFirstOrDefaultAsync<Voter>(@"SELECT  ID ,VoterName,VoterCode,IndexNumber,Voted ,VoteInProgress
+				return await connection.QueryFirstOrDefaultAsync<Voter>(@"SELECT  ID ,VoterName,VoterCode,IndexNumber,Faculty,Voted ,VoteInProgress
 						FROM dbo.Voter v WHERE v.VoterCode=@VoterCode", voter);
 			}
 		}
@@ -138,7 +136,7 @@ namespace UniVoting.Data.Implementations
 
 		}
 
-		public async Task<int> InsertSkippedVotes(SkippedVotes skipped)
+		public async Task<int> InsertSkippedVotes(SkippedVote skipped)
 		{
 
 			using (var connection = new DbManager(connectionName).Connection)

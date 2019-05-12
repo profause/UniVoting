@@ -1,46 +1,62 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Windows;
+using System.Data.SqlClient;
+using Autofac;
 using MahApps.Metro.Controls;
-using MahApps.Metro.Controls.Dialogs;
+using UniVoting.Core;
+using UniVoting.LiveView.Startup;
 using UniVoting.Services;
-using Position = UniVoting.Model.Position;
+using Position = UniVoting.Core.Position;
 
 namespace UniVoting.LiveView
 {
-	/// <summary>
-	/// Interaction logic for MainWindow.xaml
-	/// </summary>
-	public partial class MainWindow : MetroWindow
+    /// <summary>
+    /// Interaction logic for MainWindow.xaml
+    /// </summary>
+    public partial class MainWindow : MetroWindow
 	{
-		IEnumerable<Position> _positions;
+	    private readonly ILiveViewService _liveViewService;
+	    IEnumerable<Position> _positions;
+	   //readonly ILogger _logger;
 
-		public MainWindow()
+        public MainWindow()
 		{
-			InitializeComponent();
+		    InitializeComponent();
 
-			_positions=new List<Position>();
-			Loaded += MainWindow_Loaded;
+		    var container = new BootStrapper().BootStrap();
+		    _liveViewService = container.Resolve<ILiveViewService>();
+			_positions = new List<Position>();
+            //_logger = new SystemEventLoggerService();
+            Loaded += MainWindow_Loaded;
 		   
 		}
 	
 		private async void MainWindow_Loaded(object sender, System.Windows.RoutedEventArgs e)
 		{
-			try
-			{
-				_positions = await LiveViewService.Positions();
+		    try
+		    {
+		        _positions = await _liveViewService.Positions();
 
-			}
-			catch (Exception exception)
-			{
-				MessageBox.Show(exception.Message, "Error");
-			}
-			foreach (var position in _positions)
-			{
-				CastedVotesHolder.Children.Add(new TileControlLarge(position.PositionName));
-				SkippedVotesHolder.Children.Add(new TileControlSmall(position.PositionName));
-			}
+		    }
+		    catch (SqlException )
+		    {
+		        //SystemEventLoggerService.Log(exception.StackTrace);
+
+		    }
+		    catch (Exception )
+		    {
+		        //_logger.Log(exception);
+
+		    }
+		    finally
+		    {
+		        foreach (var position in _positions)
+		        {
+		            CastedVotesHolder.Children.Add(new TileControlLarge(position, _liveViewService));
+		            SkippedVotesHolder.Children.Add(new TileControlSmall(position,_liveViewService));
+		        }
+            }
+            
 		}
 	}
 }

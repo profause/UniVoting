@@ -1,15 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Reactive.Linq;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Akavache;
-using MahApps.Metro.Controls;
-using UniVoting.Model;
+using Autofac;
+using UniVoting.Core;
 using UniVoting.Services;
-using static System.Diagnostics.Process;
+using BootStrapper = UniVoting.Client.Startup.BootStrapper;
 
 namespace UniVoting.Client
 {
@@ -18,64 +17,72 @@ namespace UniVoting.Client
 	/// </summary>
 	public partial class ClientVoteCompletedPage
 	{
-		private  List<Vote> _votes;
+		private ConcurrentBag<Vote> _votes;
 		private  Voter _voter;
-		private List<SkippedVotes> _skippedVotes;
-
-		private int count;
-		public ClientVoteCompletedPage(List<Vote> votes,Voter voter, List<SkippedVotes> skippedVotes)
+		private ConcurrentBag<SkippedVote> _skippedVotes;
+        private IContainer container;
+		private int _count;
+		public ClientVoteCompletedPage(ConcurrentBag<Vote> votes,Voter voter, ConcurrentBag<SkippedVote> skippedVotes)
 		{
 			_votes = votes;
 			_voter = voter;
 			_skippedVotes = skippedVotes;
 			InitializeComponent();
-			IgnoreTaskbarOnMaximize = true;
+            container = new BootStrapper().BootStrap();
+            IgnoreTaskbarOnMaximize = true;
 			
 			
-			count = 0;
+			_count = 0;
 			Loaded += ClientVoteCompletedPage_Loaded;
 		}
 
 		private async void ClientVoteCompletedPage_Loaded(object sender, RoutedEventArgs e)
 		{
-			var election = await BlobCache.UserAccount.GetObject<Setting>("ElectionSettings");
+			var election = await BlobCache.UserAccount.GetObject<ElectionConfiguration>("ElectionSettings");
 			MainGrid.Background = new ImageBrush(Util.BytesToBitmapImage(election.Logo)) { Opacity = 0.2 };
 			try
 			{
-				await VotingService.CastVote(_votes, _voter,_skippedVotes);
-				Text.Content = $"Good Bye {_voter.VoterName.ToUpper()}, Thank You For Voting";
+				//make rabbitmq event here for submission of votes
+				//submission of skipped votes
+			    var service = container.Resolve<IVotingService>();
+                await service.CastVote(_votes, _voter,_skippedVotes);
+				Text.Text = $"Good Bye {_voter.VoterName.ToUpper()}, Thank You For Voting";
 			}
 			catch (Exception)
 			{
-				Text.Content = $"Sorry An Error Occured.\nYour Votes Were not Submitted.\n Contact the Administrators";
-				await VotingService.ResetVoter(_voter);
+				Text.Text = $"Sorry An Error Occured.\nYour Votes Were not Submitted.\n Contact the Administrators";
+
+			    var service = container.Resolve<IVotingService>();
+                await service.ResetVoter(_voter);
 
 			}
-			var _timer = new DispatcherTimer();
-			_timer.Interval = new TimeSpan(0, 0, 0, 3);
-			_timer.Tick += _timer_Tick;
-			_timer.Start();
+
+            var timer = new DispatcherTimer {Interval = new TimeSpan(0, 0, 0, 3)};
+            timer.Tick += _timer_Tick;
+			timer.Start();
 		}
 
 		private  void _timer_Tick(object sender, EventArgs e)
 		{
-			count++;
+			_count++;
 			BlobCache.Shutdown().Wait();
 			RestartApplication();
 		}
 		public void RestartApplication()
 		{
-			if (count == 1)
-			{
-				this.Hide();
-				if (Application.ResourceAssembly != null) Start(Application.ResourceAssembly.Location);
-				if (Application.Current != null)Application.Current.Shutdown();
-				// OnRestartDue(this);
+            if (_count == 1)
+            {
+                //this.Hide();
+                //Start(Application.ResourceAssembly.Location);
+                //if (Application.Current != null) Application.Current.Shutdown();
+                //// OnRestartDue(this);
+                
+                System.Diagnostics.Process.Start(Application.ResourceAssembly.Location);
+                Application.Current.Shutdown();
+            }
 
-			}
 
-
-		}
+        }
 
 		
 	}

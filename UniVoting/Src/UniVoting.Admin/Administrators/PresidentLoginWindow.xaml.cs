@@ -1,23 +1,29 @@
 ﻿using System.Windows;
+using Autofac;
 using MahApps.Metro.Controls;
 using MahApps.Metro.Controls.Dialogs;
-using UniVoting.Model;
+using Univoting.Services;
+using UniVoting.Admin.Startup;
+using UniVoting.Core;
 using UniVoting.Services;
 
-namespace UniVoting.WPF.Administrators
+namespace UniVoting.Admin.Administrators
 {
 	/// <summary>
 	/// Interaction logic for PresidentLoginWindow.xaml
 	/// </summary>
 	public partial class PresidentLoginWindow : MetroWindow
 	{
-		public PresidentLoginWindow()
+		private readonly IElectionConfigurationService _electionConfigurationService;
+	    private readonly IVotingService _votingService;
+
+	    public PresidentLoginWindow(IElectionConfigurationService electionConfigurationService,IVotingService votingService)
 		{
-			InitializeComponent();
-			WindowState=WindowState.Maximized;
-			BtnLogin.IsDefault = true;
+			_electionConfigurationService = electionConfigurationService;
+		    _votingService = votingService;
+		    InitializeComponent();
 			BtnLogin.Click += BtnLogin_Click;
-			Username.Focus();
+			//Username.Focus();
 		}
 
 		private async void BtnLogin_Click(object sender, RoutedEventArgs e)
@@ -25,21 +31,23 @@ namespace UniVoting.WPF.Administrators
 			if (!string.IsNullOrWhiteSpace(Username.Text) && !string.IsNullOrWhiteSpace(Password.Password))
 			{
 				BtnLogin.IsEnabled = false;
-				var president = await ElectionConfigurationService.Login(new Comissioner { UserName = Username.Text, Password = Password.Password, IsPresident = true });
+				var president = await _electionConfigurationService.LoginAsync(new Commissioner { UserName = Username.Text, Password = Password.Password, IsPresident = true });
 				
 				if (president != null)
 				{
-					new EcChairmanLoginWindow().Show();
-					BtnLogin.IsEnabled = true;
 
-					Close();
+                    //interface
+                    var container = new BootStrapper().BootStrap();
+                    var window = container.Resolve<EcChairmanLoginWindow>();
+                    window.ShowDialog();
+					//BtnLogin.IsEnabled = true;
+                    Close();
 				}
 				else
 				{
 					await this.ShowMessageAsync("Login Error", "Wrong username or password.");
 					Util.Clear(this);
 					BtnLogin.IsEnabled = true;
-					Username.Focus();
 
 				}
 			}
@@ -48,7 +56,6 @@ namespace UniVoting.WPF.Administrators
 				await this.ShowMessageAsync("Login Error", "Wrong username or password.");
 				Util.Clear(this);
 				BtnLogin.IsEnabled = true;
-				Username.Focus();
 
 			}
 

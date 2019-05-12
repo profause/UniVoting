@@ -10,34 +10,41 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Image = System.Windows.Controls.Image;
 
-namespace UniVoting.WPF
+namespace UniVoting.Admin
 {
 	public class Util
 	{
 		public static string GenerateRandomPassword(int length)
 		{
 		   
-			string range = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz";
-			Random r = new Random();
-
-			char[] chars = new char[length];
-			for (int i = 0; i < length; i++)
-			{
-				chars[i] = range[r.Next(0, range.Length)];
-			}
-
-			return new string(chars);
+			var range = "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz".ToCharArray();
+		    var data = new byte[1];
+		    using (var crypto = new RNGCryptoServiceProvider())
+		    {
+		        crypto.GetBytes(data);
+		        data = new byte[length];
+		        crypto.GetBytes(data);
+		    }
+		    var result = new StringBuilder(length);
+		    foreach (var b in data)
+		    {
+		        result.Append(range[b % (range.Length)]);
+		    }
+			return result.ToString();
 		}
 		public static void Clear(Visual myMainWindow)
 		{
-			int childrenCount = VisualTreeHelper.GetChildrenCount(myMainWindow);
+			var childrenCount = VisualTreeHelper.GetChildrenCount(myMainWindow);
 			for (int i = 0; i < childrenCount; i++)
 			{
 				var visualChild = (Visual)VisualTreeHelper.GetChild(myMainWindow, i);
-				if (visualChild is TextBox)
+				if (visualChild is TextBox tb)
 				{
-					TextBox tb = (TextBox)visualChild;
-					tb.Text = "";
+                    tb.Text = string.Empty;
+				}
+                if (visualChild is PasswordBox tb1)
+				{
+                    tb1.Password =string.Empty;
 				}
 				Clear(visualChild);
 			}
@@ -45,11 +52,11 @@ namespace UniVoting.WPF
 		}
 		public static System.Drawing.Image ConvertImage(BitmapImage img)
 		{
-			MemoryStream ms = new MemoryStream();
-			BmpBitmapEncoder bbe = new BmpBitmapEncoder();
+			var ms = new MemoryStream();
+			var bbe = new BmpBitmapEncoder();
 			bbe.Frames.Add(BitmapFrame.Create(img.UriSource));
 			bbe.Save(ms);
-			System.Drawing.Image img2 = System.Drawing.Image.FromStream(ms);
+			var img2 = System.Drawing.Image.FromStream(ms);
 			return img2;
 		}
 		public static Bitmap ResizeImage(System.Drawing.Image image, int width, int height)

@@ -1,14 +1,15 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Media;
 using Akavache;
 using MahApps.Metro.Controls;
-using UniVoting.Model;
+using UniVoting.Core;
 using UniVoting.Services;
-using Position = UniVoting.Model.Position;
+using Position = UniVoting.Core.Position;
+
 
 namespace UniVoting.Client
 {
@@ -17,47 +18,75 @@ namespace UniVoting.Client
 	/// </summary>
 	public partial class MainWindow : MetroWindow
 	{
-		private readonly Stack<Position> _positionsStack;
+	    AppDomain currentDomain = AppDomain.CurrentDomain;
+
+        private readonly Stack<Position> _positionsStack;
 		private ClientVotingPage _votingPage;
 		private Voter _voter;
-		private List<Vote> _votes;
-		private List<SkippedVotes> _skippedVotes;
-		public MainWindow(Stack<Position> positionsStack, Voter voter)
+	    private readonly IVotingService _votingService;
+	    private ConcurrentBag<Vote> _votes;
+		private ConcurrentBag<SkippedVote> _skippedVotes;
+		public MainWindow(Stack<Position> positionsStack, Voter voter,IVotingService votingService)
 		{
 			InitializeComponent();
 			IgnoreTaskbarOnMaximize = true;
 			_positionsStack = positionsStack;
-			this._voter = voter;
-			_skippedVotes = new List<SkippedVotes>();
-			_votes=new List<Vote>();
+			_voter = voter;
+		    _votingService = votingService;
+		    _skippedVotes = new ConcurrentBag<SkippedVote>();
+			_votes=new ConcurrentBag<Vote>();
 			Loaded += MainWindow_Loaded;
 			PageHolder.Navigated += PageHolder_Navigated;
 			CandidateControl.VoteCast += CandidateControl_VoteCast;
+            YesOrNoCandidateControl.VoteCast += YesOrNoCandidateControl_VoteCast;
+            YesOrNoCandidateControl.VoteNo += YesOrNoCandidateControl_VoteNo		    ;
 			Loaded += MainWindow_Loaded1;
-		}
+            currentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
-		private async void MainWindow_Loaded1(object sender, RoutedEventArgs e)
+
+        }
+
+        private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            var exp = e.ExceptionObject as Exception;
+            MessageBox.Show(exp?.Message);
+        }
+
+        private void YesOrNoCandidateControl_VoteNo(object source, EventArgs args)
+        {
+            ProcessVote();
+        }
+
+        private void YesOrNoCandidateControl_VoteCast(object source, EventArgs args)
+        {
+           ProcessVote();
+        }
+
+        private async void MainWindow_Loaded1(object sender, RoutedEventArgs e)
 		{
-			var election = await BlobCache.UserAccount.GetObject<Setting>("ElectionSettings");
-			MainGrid.Background = new ImageBrush(Util.BytesToBitmapImage(election.Logo));
-			MainGrid.Background.Opacity = 0.2;
+			var election = await BlobCache.UserAccount.GetObject<ElectionConfiguration>("ElectionSettings");
+		    MainGrid.Background = new ImageBrush(Util.BytesToBitmapImage(election.Logo)) {Opacity = 0.2};
 		}
 
 		private void CandidateControl_VoteCast(object source, EventArgs args)
 		{
-			if (_positionsStack.Count != 0)
-			{
-				PageHolder.Content = VotingPageMaker(_positionsStack);
-			}
-			else
-			{
-				_voter.Voted = true;
-				//VotingService.UpdateVoter(_voter);
-				new ClientVoteCompletedPage(_votes, _voter,_skippedVotes).Show();
-				Hide();
-			}
+		    ProcessVote();
 		}
-		private void PageHolder_Navigated(object sender, System.Windows.Navigation.NavigationEventArgs e)
+
+	    private void ProcessVote()
+	    {
+	        if (_positionsStack.Count != 0)
+	        {
+	            PageHolder.Content = VotingPageMaker(_positionsStack);
+	        }
+	        else
+	        {
+	            new ClientVoteCompletedPage(_votes, _voter, _skippedVotes).Show();
+	            Hide();
+	        }
+	    }
+
+	    private void PageHolder_Navigated(object sender, System.Windows.Navigation.NavigationEventArgs e)
 		{
 			PageHolder.NavigationService.RemoveBackEntry();
 		}
@@ -73,25 +102,12 @@ namespace UniVoting.Client
 		{
 		 PageHolder.Content = VotingPageMaker(_positionsStack);
 			_voter.VoteInProgress = true;
-			await VotingService.UpdateVoter(_voter);
+			await _votingService.UpdateVoter(_voter);
 		}
 
 		private void VotingPage_VoteCompleted(object source, EventArgs args)
 		{
-			if (_positionsStack.Count != 0)
-			{
-			   PageHolder.Content = VotingPageMaker(_positionsStack);
-				
-			}
-			else
-			{
-				_voter.Voted=true;
-
-				//VotingService.UpdateVoter(_voter);
-			   new ClientVoteCompletedPage(_votes,_voter,_skippedVotes).Show();
-				Hide();
-
-			}
+			ProcessVote();
 		}
 	}
 }

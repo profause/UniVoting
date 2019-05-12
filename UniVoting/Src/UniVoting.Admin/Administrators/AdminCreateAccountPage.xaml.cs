@@ -1,24 +1,26 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Forms.VisualStyles;
 using System.Windows.Media;
-using MahApps.Metro;
 using MahApps.Metro.Controls;
 using MahApps.Metro.Controls.Dialogs;
-using UniVoting.Data.Implementations;
-using UniVoting.Model;
-using UniVoting.Services;
+using Univoting.Services;
+using UniVoting.Admin.Startup;
+using UniVoting.Core;
 
-namespace UniVoting.WPF.Administrators
+namespace UniVoting.Admin.Administrators
 {
 	/// <summary>
 	/// Interaction logic for AdminCreateAccountPage.xaml
 	/// </summary>
 	public partial class AdminCreateAccountPage : Page
 	{
-		public AdminCreateAccountPage()
+		private readonly IElectionConfigurationService _electionConfigurationService;
+
+		public AdminCreateAccountPage(IElectionConfigurationService electionConfigurationService)
 		{
+			var container = new BootStrapper().BootStrap();
+		    _electionConfigurationService = electionConfigurationService;
 			InitializeComponent();
 			BtnSave.Click += BtnSave_Click;
 			IsChairman.Checked += IsChairman_Checked;
@@ -59,7 +61,7 @@ namespace UniVoting.WPF.Administrators
 				var metroWindow = (Window.GetWindow(this) as MetroWindow);
 				try
 				{
-					await new ElectionConfigurationService().SaveComissioner(new Comissioner
+					await _electionConfigurationService.SaveCommissionerAsync(new Commissioner
 					{
 						FullName = TextBoxName.Text,
 						UserName = Username.Text,

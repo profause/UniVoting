@@ -1,94 +1,126 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
-using UniVoting.Model;
+using Autofac;
+using UniVoting.Admin.Startup;
+using UniVoting.Core;
 
-namespace UniVoting.WPF.Administrators
+namespace UniVoting.Admin.Administrators
 {
 	/// <summary>
 	/// Interaction logic for AdminMenuPage.xaml
 	/// </summary>
 	public partial class AdminMenuPage : Page
 	{
-		public Comissioner Comissioner { get; }
+		public Commissioner Commissioner { get; }
 
-		public AdminMenuPage(Comissioner comissioner)
+	    private IContainer container;
+	   
+        public AdminMenuPage(Commissioner commissioner)
 		{
-			Comissioner = comissioner;
+			Commissioner = commissioner;
+
+            container=new BootStrapper().BootStrap();
 			InitializeComponent();
 			BtnDeclareVotes.Click += BtnDeclareVotes_Click;
 			BtnDispensePassword.Click += BtnDispensePassword_Click;
-			Loaded += AdminMenuPage_Loaded;
+            Loaded += AdminMenuPage_Loaded;
+            BtnAddFaculty.Click += BtnAddFaculty_Click;
+            
 		}
 
-		private void BtnDispensePassword_Click(object sender, RoutedEventArgs e)
+        private void BtnAddFaculty_Click(object sender, RoutedEventArgs e)
+        {
+            
+        }
+
+        private void BtnDispensePassword_Click(object sender, RoutedEventArgs e)
 		{
-			new AdminDispensePasswordWindow().ShowDialog();
+		    container.Resolve<AdminDispensePasswordWindow>().ShowDialog()
+		        ;
+			//new AdminDispensePasswordWindow(TODO).ShowDialog();
 		}
 
 		private void AdminMenuPage_Loaded(object sender, RoutedEventArgs e)
 		{
 
-			if (Comissioner.IsChairman)
+			if (Commissioner.IsChairman)
 			{
 				BtnSetUpElection.IsEnabled = false;
 				BtnCreateAccount.IsEnabled = false;
 				BtnSetUpCandidates.IsEnabled = false;
 				BtnSetUpPostions.IsEnabled = false;
+                BtnAddFaculty.IsEnabled = false;
 			
 			}
-			else if(Comissioner.IsPresident)
+			else if(Commissioner.IsPresident)
 			{
 				BtnSetUpElection.IsEnabled = false;
 				BtnCreateAccount.IsEnabled = false;
 				BtnSetUpCandidates.IsEnabled = false;
 				BtnSetUpPostions.IsEnabled = false;
 				BtnSetUpVoters.IsEnabled = false;
+                BtnAddFaculty.IsEnabled = false;
 			}
-			else if (!Comissioner.IsChairman && !Comissioner.IsAdmin && !Comissioner.IsPresident)
+			else if (!Commissioner.IsChairman && !Commissioner.IsAdmin && !Commissioner.IsPresident)
 			{
 				BtnSetUpElection.IsEnabled = false;
 				BtnCreateAccount.IsEnabled = false;
 				BtnSetUpCandidates.IsEnabled = false;
 				BtnSetUpPostions.IsEnabled = false;
+                BtnAddFaculty.IsEnabled = false;
 				BtnDeclareVotes.IsEnabled = false;
 			}
 		}
 
 		private void BtnDeclareVotes_Click(object sender, RoutedEventArgs e)
 		{
-			new PresidentLoginWindow().ShowDialog();
+		    container.Resolve<PresidentLoginWindow>().ShowDialog();
+
+			//new PresidentLoginWindow(TODO).ShowDialog();
 		}
 
 		private void BtnCreateAccount_Click(object sender, RoutedEventArgs e)
 		{
-			  NavigationService?.Navigate(new AdminCreateAccountPage());
+		    var page = container.Resolve<AdminCreateAccountPage>();
+		   
+              NavigationService?.Navigate(page);
 			
 		}
 
 		private void BtnSetUpElection_Click(object sender, RoutedEventArgs e)
 		{
-			
-				NavigationService?.Navigate(new AdminSetUpElectionPage());
+		    var page = container.Resolve<AdminSetUpElectionPage>();
+
+		    NavigationService?.Navigate(page);
 			
 		}
 
 		private void BtnSetUpPostions_Click(object sender, RoutedEventArgs e)
 		{
-			
-				NavigationService?.Navigate(new AdminSetUpPositionPage());
-			
-		}
+		    var page = container.Resolve<AdminSetUpPositionPage>();
+
+            page.ShowDialog();
+
+
+        }
 
 		private void BtnSetUpCandidates_Click(object sender, RoutedEventArgs e)
 		{
-			
-				NavigationService?.Navigate(new AdminSetUpCandidatesPage());
+		    var page = container.Resolve<AdminSetUpCandidatesPage>();
+
+		    NavigationService?.Navigate(page);
+
+
+            //NavigationService?.Navigate(new AdminSetUpCandidatesPage());
 			
 		}
 
 		private void BtnSetUpVoters_Click(object sender, RoutedEventArgs e)
 		{
-			NavigationService?.Navigate(new AdminAddVotersPage());
-		}
+		    var page = container.Resolve<AdminAddVotersPage>();
+
+            page.ShowDialog();
+            //NavigationService?.Navigate(new AdminAddVotersPage(TODO, TODO));
+        }
 	}
 }

@@ -3,14 +3,7 @@ using System.Data;
 
 namespace Univoting.Reporting
 {
-	using System;
-	using System.ComponentModel;
-	using System.Drawing;
-	using System.Windows.Forms;
-	using Telerik.Reporting;
-	using Telerik.Reporting.Drawing;
-
-	/// <summary>
+    /// <summary>
 	/// Summary description for HeadSection.
 	/// </summary>
 	public partial class HeadSection : Telerik.Reporting.Report

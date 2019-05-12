@@ -7,7 +7,7 @@
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              Width="250"
              mc:Ignorable="d">
-    <materialDesign:Card Margin="3" UniformCornerRadius="1" HorizontalAlignment="Stretch" Padding="5" VerticalAlignment="Stretch" Background="{DynamicResource MaterialDesignBackground}">
+    <materialDesign:Card Margin="3" materialDesign:ShadowAssist.ShadowDepth="Depth1" UniformCornerRadius="1" HorizontalAlignment="Stretch" Padding="0" VerticalAlignment="Stretch" Background="{DynamicResource MaterialDesignBackground}">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"></RowDefinition>
@@ -16,12 +16,14 @@
                 <RowDefinition Height="Auto"></RowDefinition>
             </Grid.RowDefinitions>
 
-            <Label FontSize="20" Grid.Row="1" Name="CandidateName" Foreground="{DynamicResource AccentColorBrush}" FontFamily="Segoe Ui semibold" Margin="-2,0,0,0" HorizontalAlignment="Left" Width="230">Candidate Name</Label>
+            <TextBlock TextWrapping="WrapWithOverflow"  FontSize="20" Grid.Row="1" Name="CandidateName" Foreground="{DynamicResource AccentColorBrush}" FontFamily="Segoe Ui semibold" Margin="-2,0,0,0" HorizontalAlignment="Center" TextAlignment="Center" Width="230">Candidate Name</TextBlock>
             <Image Name="CandidateImage" Grid.Row="2" Source="/Resources/images/user.png"></Image>
             <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Label FontSize="18" Foreground="{DynamicResource AccentColorBrush}" FontFamily="Segoe Ui Light">Vote</Label>
+                <Label FontSize="18" Foreground="{DynamicResource AccentColorBrush}"
+                       VerticalAlignment="Center" Margin="0,0,10,0"
+                       FontFamily="Segoe Ui Light">Vote</Label>
                 <Button Style="{StaticResource MaterialDesignFloatingActionDarkButton}"
-                         HorizontalAlignment="Right" VerticalAlignment="Top"
+                         HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,10,10,10"
                          Name="BtnVote" TabIndex="0" Background="{DynamicResource AccentColorBrush}"
                          ToolTip="Vote for this candidate">
                     <materialDesign:PackIcon Kind="ThumbUp" Grid.Row="0" Grid.Column="0"

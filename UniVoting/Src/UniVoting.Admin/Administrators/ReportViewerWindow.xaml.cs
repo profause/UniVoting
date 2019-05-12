@@ -1,18 +1,15 @@
-﻿using Telerik.ReportViewer.Wpf;
+﻿using System.Windows;
+using Telerik.ReportViewer.Wpf;
 
-namespace UniVoting.WPF.Administrators
+namespace UniVoting.Admin.Administrators
 {
-    using System;
-    using System.Windows;
-    using Telerik.Windows.Controls;
-
     public partial class ReportViewerWindow : Window
     {
         public ReportViewerWindow()
         {
             InitializeComponent();
             WindowState=WindowState.Maximized;
-            this.ReportViewer1.ZoomMode=ZoomMode.PageWidth;
+            ReportViewer1.ZoomMode=ZoomMode.PageWidth;
         }
     }
 }
