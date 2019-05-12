@@ -2,19 +2,13 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Reactive.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using Akavache;
-using Autofac;
 using MahApps.Metro.Controls;
 using MahApps.Metro.Controls.Dialogs;
-using Univoting.Services;
-using UniVoting.Core;
+using UniVoting.Model;
 using UniVoting.Services;
-using BootStrapper = UniVoting.Client.Startup.BootStrapper;
-using IContainer = Autofac.IContainer;
-using Position = UniVoting.Core.Position;
 
 namespace UniVoting.Client
 {
@@ -23,21 +17,17 @@ namespace UniVoting.Client
 	/// </summary>
 	public partial class ClientsLoginWindow : MetroWindow
 	{
-		private readonly IElectionConfigurationService _electionConfigurationService;
-		private IEnumerable<Position> _positions;
-		 private Stack<Position> _positionsStack;
+		private IEnumerable<Model.Position> _positions;
+		 private Stack<Model.Position> _positionsStack;
 		private Voter _voter;
-        private IContainer container;
 		public ClientsLoginWindow()
 		{
 			InitializeComponent();
-            container = new BootStrapper().BootStrap();
-
-            _electionConfigurationService = container.Resolve<IElectionConfigurationService>();
-
-            _positionsStack = new Stack<Position>();
+			_positionsStack=new Stack<Model.Position>();
 			Loaded += ClientsLoginWindow_Loaded;
 			_voter=new Voter();
+			IgnoreTaskbarOnMaximize = true;
+			BtnGo.IsDefault = true;
 			BtnGo.Click += BtnGo_Click;
 		}
 		
@@ -46,18 +36,18 @@ namespace UniVoting.Client
 			e.Cancel = true;
 		}
 		
-		private async void ClientsLoginWindow_Loaded(object sender, RoutedEventArgs e)
+		private async void ClientsLoginWindow_Loaded(object sender, System.Windows.RoutedEventArgs e)
 		{
 			try
 			{
                 //ThemeManagerHelper.CreateAppStyleBy(System.Windows.Media.Color.FromArgb(255, 122, 200, 122),true);
-				var election = await BlobCache.UserAccount.GetObject<ElectionConfiguration>("ElectionSettings");
+				var election = await BlobCache.UserAccount.GetObject<Setting>("ElectionSettings");
 				MainGrid.Background = new ImageBrush(Util.BytesToBitmapImage(election.Logo)) {Opacity = 0.2};
 				VotingName.Text = election.ElectionName.ToUpper();
-				VotingSubtitle.Content = election.ElectionSubTitle.ToUpper();
+				VotingSubtitle.Content = election.EletionSubTitle.ToUpper();
 
-				_positions = new List<Position>();
-				_positions = await BlobCache.UserAccount.GetObject<IEnumerable<Position>>("ElectionPositions");
+				_positions = new List<Model.Position>();
+				_positions = await BlobCache.UserAccount.GetObject<IEnumerable<Model.Position>>("ElectionPositions");
 				foreach (var position in _positions)
 				{
 					_positionsStack.Push(position);
@@ -65,24 +55,22 @@ namespace UniVoting.Client
 			}
 			catch (Exception exception)
 			{
-			await this.ShowMessageAsync("Election Positions Error", exception.Message);
+				MessageBox.Show(exception.Message, "Election Positions Error");
 			}
 		}
 
-		private async void BtnGo_Click(object sender, RoutedEventArgs e)
+		private async void BtnGo_Click(object sender, System.Windows.RoutedEventArgs e)
 		{
-		   
-
 			if (!string.IsNullOrWhiteSpace(Pin.Text))
 			{
 				try
 				{
-					_voter = await _electionConfigurationService.LoginVoterAsync(new Voter { VoterCode = Pin.Text });
-				await	ConfirmVoterAsync(_voter);
+					_voter = await ElectionConfigurationService.LoginVoter(new Voter { VoterCode = Pin.Text });
+					ConfirmVoterAsync();
 				}
 				catch (Exception exception)
 				{
-				await	this.ShowMessageAsync("Election Login Error", exception.Message);
+					MessageBox.Show(exception.Message, "Election Login Error");
 					throw;
 				}
 			}
@@ -90,15 +78,13 @@ namespace UniVoting.Client
 		   
 		}
 
-		public async Task ConfirmVoterAsync(Voter voter)
+		public async void ConfirmVoterAsync()
 		{
-		   
-		    var votingservice = container.Resolve<IVotingService>();
-            if (_voter!=null)
+			if (_voter!=null)
 			{
-				if (!_voter.VoteInProgress && !voter.Voted)
+				if (!_voter.VoteInProgress && !_voter.Voted)
 				{
-					new MainWindow(_positionsStack, voter, votingservice).Show();
+					new MainWindow(_positionsStack, _voter).Show();
 					Hide();
 				}
 				else

@@ -4,9 +4,8 @@ using System.Windows;
 using System.Windows.Controls;
 using MahApps.Metro.Controls;
 using MahApps.Metro.Controls.Dialogs;
-using UniVoting.Core;
-using Position = UniVoting.Core.Position;
-
+using UniVoting.Model;
+using Position = UniVoting.Model.Position;
 
 namespace UniVoting.Client
 {
@@ -22,7 +21,7 @@ namespace UniVoting.Client
         private readonly Position _position;
         private readonly Candidate _candidate;
         private readonly Voter _voter;
-        private readonly ConcurrentBag<SkippedVote> _skippedVotes;
+        private readonly ConcurrentBag<SkippedVotes> _skippedVotes;
 
         public int CandidateId
         {
@@ -42,7 +41,7 @@ namespace UniVoting.Client
 
 
         public YesOrNoCandidateControl(ConcurrentBag<Vote> votes, Position position, Candidate candidate, Voter voter,
-            ConcurrentBag<SkippedVote> skippedVotes)
+            ConcurrentBag<SkippedVotes> skippedVotes)
         {
             InitializeComponent();
             _customDialog = new CustomDialog();
@@ -51,7 +50,7 @@ namespace UniVoting.Client
             _customDialog.Content = confirmDialogControl;
             _votes = votes;
             _position = position;
-            _candidate = candidate;
+            this._candidate = candidate;
             _voter = voter;
             _skippedVotes = skippedVotes;
             BtnVoteNo.Click += BtnVoteNo_Click;
@@ -65,7 +64,7 @@ namespace UniVoting.Client
 
         private async void SkipBtnYes_Click(object sender, RoutedEventArgs e)
         {
-            _skippedVotes.Add(new SkippedVote { Positionid = _position.Id, VoterId = _voter.Id });
+            _skippedVotes.Add(new SkippedVotes { Positionid = _position.Id, VoterId = _voter.Id });
             OnVoteNo(this);
             await _metroWindow.HideMetroDialogAsync(_customDialog);
         }

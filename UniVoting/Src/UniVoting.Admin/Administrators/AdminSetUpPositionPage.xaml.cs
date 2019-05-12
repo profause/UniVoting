@@ -1,84 +1,82 @@
-﻿using System;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
-using Autofac;
 using MahApps.Metro.Controls;
 using MahApps.Metro.Controls.Dialogs;
-using Univoting.Services;
-using UniVoting.Admin.Startup;
-using Position = UniVoting.Core.Position;
+using UniVoting.Services;
 
 namespace UniVoting.Admin.Administrators
 {
 	/// <summary>
 	///     Interaction logic for AdminSetUpPositionPage.xaml
 	/// </summary>
-	public partial class AdminSetUpPositionPage
+	public partial class AdminSetUpPositionPage : Page
 	{
-		private IElectionConfigurationService _electionConfigurationService;
-        private IContainer container;
-        private int _positionId;
-        public Position CurrentPosition { get; set; }
-       
+		public static AdminSetUpPositionPage Instance;
+        private CustomDialog _customDialog;
+        private AddPositionDialogControl _addPositionDialogControl;
+	    private MetroWindow _metroWindow;
+
         public AdminSetUpPositionPage()
 		{
-            
 			InitializeComponent();
-            _positionId = 0;
-             container = new BootStrapper().BootStrap();
-            Loaded += AdminSetUpPositionPage_Loaded;
-            AddPosition.Click += AddPosition_Click;
-            PositionList.MouseDoubleClick += PositionList_MouseDoubleClick;
+		
+		   Instance = this;
+			Instance.Loaded += Instance_Loaded;
+			
+			
+		}
+		
+		private async void Instance_Loaded(object sender, RoutedEventArgs e)
+		{
+			PositionControlHolder.Children.Clear();
+		   var positions =await ElectionConfigurationService.GetAllPositionsAsync();
+			foreach (var position in positions)
+				PositionControlHolder.Children.Add(new PositionControl
+				{
+					TextBoxPosition = {Text = position.PositionName},
+                    TextBoxFaculty = {Text =position.Faculty },
+					Id = position.Id
+				});
             
+            _customDialog = new CustomDialog();
+            _addPositionDialogControl = new AddPositionDialogControl();
+            _addPositionDialogControl.BtnCancel.Click +=BtnCancelClick;
+            _addPositionDialogControl.BtnSave.Click += BtnSaveClick;
+            _customDialog.Content = _addPositionDialogControl;
+           
         }
 
-        private void PositionList_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            if (PositionList.SelectedItem is Position pos)
-            {
-                CurrentPosition = pos;
-                _positionId = CurrentPosition.Id;
-                TextBoxPositionName.Text = CurrentPosition.PositionName;
-                FacultyList.SelectedValue=CurrentPosition.FacultyId;
-            }
-        }
 
-       
-        private async void AddPosition_Click(object sender, RoutedEventArgs e)
-        {
-            
+		private async void BtnAdd_Click(object sender, RoutedEventArgs e)
+		{
+			 _metroWindow = Window.GetWindow(this) as MetroWindow;
             var settings = new MetroDialogSettings
-            {
-                ColorScheme = MetroDialogColorScheme.Theme,
-                AnimateShow = true,
-            };
+			{
+				ColorScheme = MetroDialogColorScheme.Theme,
+			    AnimateShow = true,
+		    };
+			await _metroWindow.ShowMetroDialogAsync(_customDialog,settings);
+	
+		}
 
-            if (string.IsNullOrWhiteSpace(TextBoxPositionName.Text)||string.IsNullOrWhiteSpace(FacultyList.Text))
-            {
-            await this.ShowMessageAsync("Add new Position", "Please Specify Position Name ");
+		public void RemovePosition(UserControl c)
+		{
+			PositionControlHolder.Children.Remove(c);
+		}
 
-            }
-            var result = await this.ShowMessageAsync("Add new Position", "are you sure you want to add ", MessageDialogStyle.AffirmativeAndNegative, settings);
-            if (result != MessageDialogResult.Affirmative) return;
-            CurrentPosition = new Position { Id = _positionId, PositionName = TextBoxPositionName.Text,RankId = Convert.ToInt32(RankList.SelectedValue), FacultyId = Convert.ToInt32(FacultyList.SelectedValue) };
-            _electionConfigurationService = container.Resolve<IElectionConfigurationService>();
-            await _electionConfigurationService.AddPositionAsync(CurrentPosition);
-            await this.ShowMessageAsync("Add new Position", "success");
-            AdminSetUpPositionPage_Loaded(this, e);
-
-        }
-
-        private async void AdminSetUpPositionPage_Loaded(object sender, RoutedEventArgs e)
+        private async void BtnSaveClick(object sender, RoutedEventArgs e)
         {
-            _electionConfigurationService =container.Resolve<IElectionConfigurationService>();
-            FacultyList.ItemsSource =await  _electionConfigurationService.GetFacultiesAsync();
-            PositionList.ItemsSource
-                = await  _electionConfigurationService.GetAllPositionsAsync(true);
+            var pos = _addPositionDialogControl.TextBoxPosition.Text;
+            var fac = _addPositionDialogControl.TextBoxFaculty.Text;
+          await  ElectionConfigurationService.AddPosition(new Model.Position{PositionName = pos,Faculty = fac});
+            PositionControlHolder.Children.Add(new PositionControl(pos));
+            await  _metroWindow.HideMetroDialogAsync(_customDialog);
 
-            RankList.ItemsSource
-                = await  _electionConfigurationService.GetAllRanksAsync();
 
         }
-        
+        private async void BtnCancelClick(object sender, RoutedEventArgs e)
+        {
+          await  _metroWindow.HideMetroDialogAsync(_customDialog);
+        }
     }
 }

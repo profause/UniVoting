@@ -4,9 +4,8 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using MahApps.Metro.Controls;
 using MahApps.Metro.Controls.Dialogs;
-using Univoting.Services;
-using UniVoting.Admin.Startup;
-using UniVoting.Core;
+using UniVoting.Model;
+using UniVoting.Services;
 
 namespace UniVoting.Admin.Administrators
 {
@@ -15,12 +14,8 @@ namespace UniVoting.Admin.Administrators
 	/// </summary>
 	public partial class AdminCreateAccountPage : Page
 	{
-		private readonly IElectionConfigurationService _electionConfigurationService;
-
-		public AdminCreateAccountPage(IElectionConfigurationService electionConfigurationService)
+		public AdminCreateAccountPage()
 		{
-			var container = new BootStrapper().BootStrap();
-		    _electionConfigurationService = electionConfigurationService;
 			InitializeComponent();
 			BtnSave.Click += BtnSave_Click;
 			IsChairman.Checked += IsChairman_Checked;
@@ -61,7 +56,7 @@ namespace UniVoting.Admin.Administrators
 				var metroWindow = (Window.GetWindow(this) as MetroWindow);
 				try
 				{
-					await _electionConfigurationService.SaveCommissionerAsync(new Commissioner
+					await new ElectionConfigurationService().SaveComissioner(new Comissioner
 					{
 						FullName = TextBoxName.Text,
 						UserName = Username.Text,

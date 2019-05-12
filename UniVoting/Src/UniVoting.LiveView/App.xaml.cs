@@ -19,6 +19,7 @@ namespace UniVoting.LiveView
            ThemeManagerHelper.CreateAppStyleBy(Colors.Red);
            ThemeManagerHelper.CreateAppStyleBy(Colors.GreenYellow);
            ThemeManagerHelper.CreateAppStyleBy(Colors.Indigo, true);
+
             base.OnStartup(e);
         }
     }

@@ -1,10 +1,7 @@
 ﻿using System.Windows;
-using Autofac;
 using MahApps.Metro.Controls;
 using MahApps.Metro.Controls.Dialogs;
-using Univoting.Services;
-using UniVoting.Admin.Startup;
-using UniVoting.Core;
+using UniVoting.Model;
 using UniVoting.Services;
 
 namespace UniVoting.Admin.Administrators
@@ -14,16 +11,13 @@ namespace UniVoting.Admin.Administrators
 	/// </summary>
 	public partial class PresidentLoginWindow : MetroWindow
 	{
-		private readonly IElectionConfigurationService _electionConfigurationService;
-	    private readonly IVotingService _votingService;
-
-	    public PresidentLoginWindow(IElectionConfigurationService electionConfigurationService,IVotingService votingService)
+		public PresidentLoginWindow()
 		{
-			_electionConfigurationService = electionConfigurationService;
-		    _votingService = votingService;
-		    InitializeComponent();
+			InitializeComponent();
+			WindowState=WindowState.Maximized;
+			BtnLogin.IsDefault = true;
 			BtnLogin.Click += BtnLogin_Click;
-			//Username.Focus();
+			Username.Focus();
 		}
 
 		private async void BtnLogin_Click(object sender, RoutedEventArgs e)
@@ -31,23 +25,21 @@ namespace UniVoting.Admin.Administrators
 			if (!string.IsNullOrWhiteSpace(Username.Text) && !string.IsNullOrWhiteSpace(Password.Password))
 			{
 				BtnLogin.IsEnabled = false;
-				var president = await _electionConfigurationService.LoginAsync(new Commissioner { UserName = Username.Text, Password = Password.Password, IsPresident = true });
+				var president = await ElectionConfigurationService.Login(new Comissioner { UserName = Username.Text, Password = Password.Password, IsPresident = true });
 				
 				if (president != null)
 				{
+					new EcChairmanLoginWindow().Show();
+					BtnLogin.IsEnabled = true;
 
-                    //interface
-                    var container = new BootStrapper().BootStrap();
-                    var window = container.Resolve<EcChairmanLoginWindow>();
-                    window.ShowDialog();
-					//BtnLogin.IsEnabled = true;
-                    Close();
+					Close();
 				}
 				else
 				{
 					await this.ShowMessageAsync("Login Error", "Wrong username or password.");
 					Util.Clear(this);
 					BtnLogin.IsEnabled = true;
+					Username.Focus();
 
 				}
 			}
@@ -56,6 +48,7 @@ namespace UniVoting.Admin.Administrators
 				await this.ShowMessageAsync("Login Error", "Wrong username or password.");
 				Util.Clear(this);
 				BtnLogin.IsEnabled = true;
+				Username.Focus();
 
 			}
 

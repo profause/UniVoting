@@ -5,10 +5,9 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Akavache;
-using Autofac;
-using UniVoting.Core;
+using UniVoting.Model;
 using UniVoting.Services;
-using BootStrapper = UniVoting.Client.Startup.BootStrapper;
+using static System.Diagnostics.Process;
 
 namespace UniVoting.Client
 {
@@ -19,17 +18,16 @@ namespace UniVoting.Client
 	{
 		private ConcurrentBag<Vote> _votes;
 		private  Voter _voter;
-		private ConcurrentBag<SkippedVote> _skippedVotes;
-        private IContainer container;
+		private ConcurrentBag<SkippedVotes> _skippedVotes;
+
 		private int _count;
-		public ClientVoteCompletedPage(ConcurrentBag<Vote> votes,Voter voter, ConcurrentBag<SkippedVote> skippedVotes)
+		public ClientVoteCompletedPage(ConcurrentBag<Vote> votes,Voter voter, ConcurrentBag<SkippedVotes> skippedVotes)
 		{
 			_votes = votes;
 			_voter = voter;
 			_skippedVotes = skippedVotes;
 			InitializeComponent();
-            container = new BootStrapper().BootStrap();
-            IgnoreTaskbarOnMaximize = true;
+			IgnoreTaskbarOnMaximize = true;
 			
 			
 			_count = 0;
@@ -38,28 +36,25 @@ namespace UniVoting.Client
 
 		private async void ClientVoteCompletedPage_Loaded(object sender, RoutedEventArgs e)
 		{
-			var election = await BlobCache.UserAccount.GetObject<ElectionConfiguration>("ElectionSettings");
+			var election = await BlobCache.UserAccount.GetObject<Setting>("ElectionSettings");
 			MainGrid.Background = new ImageBrush(Util.BytesToBitmapImage(election.Logo)) { Opacity = 0.2 };
 			try
 			{
 				//make rabbitmq event here for submission of votes
 				//submission of skipped votes
-			    var service = container.Resolve<IVotingService>();
-                await service.CastVote(_votes, _voter,_skippedVotes);
+				await VotingService.CastVote(_votes, _voter,_skippedVotes);
 				Text.Text = $"Good Bye {_voter.VoterName.ToUpper()}, Thank You For Voting";
 			}
 			catch (Exception)
 			{
 				Text.Text = $"Sorry An Error Occured.\nYour Votes Were not Submitted.\n Contact the Administrators";
-
-			    var service = container.Resolve<IVotingService>();
-                await service.ResetVoter(_voter);
+				await VotingService.ResetVoter(_voter);
 
 			}
-
-            var timer = new DispatcherTimer {Interval = new TimeSpan(0, 0, 0, 3)};
-            timer.Tick += _timer_Tick;
-			timer.Start();
+			var _timer = new DispatcherTimer();
+			_timer.Interval = new TimeSpan(0, 0, 0, 3);
+			_timer.Tick += _timer_Tick;
+			_timer.Start();
 		}
 
 		private  void _timer_Tick(object sender, EventArgs e)
@@ -70,19 +65,17 @@ namespace UniVoting.Client
 		}
 		public void RestartApplication()
 		{
-            if (_count == 1)
-            {
-                //this.Hide();
-                //Start(Application.ResourceAssembly.Location);
-                //if (Application.Current != null) Application.Current.Shutdown();
-                //// OnRestartDue(this);
-                
-                System.Diagnostics.Process.Start(Application.ResourceAssembly.Location);
-                Application.Current.Shutdown();
-            }
+			if (_count == 1)
+			{
+				this.Hide();
+				Start(Application.ResourceAssembly.Location);
+				if (Application.Current != null)Application.Current.Shutdown();
+				// OnRestartDue(this);
+
+			}
 
 
-        }
+		}
 
 		
 	}

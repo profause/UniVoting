@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Transactions;
+using Dapper;
 using UniVoting.Model;
 
 namespace UniVoting.Data.Implementations
@@ -82,7 +83,7 @@ namespace UniVoting.Data.Implementations
 
 
 		}
-		public  async Task InsertBulkVotes(IEnumerable<Vote> votes, Voter voter, IEnumerable<SkippedVote> skippedVotes)
+		public  async Task InsertBulkVotes(IEnumerable<Vote> votes, Voter voter, IEnumerable<SkippedVotes> skippedVotes)
 		{
 			using (var transaction = new TransactionScope())
 			{
@@ -136,7 +137,7 @@ namespace UniVoting.Data.Implementations
 
 		}
 
-		public async Task<int> InsertSkippedVotes(SkippedVote skipped)
+		public async Task<int> InsertSkippedVotes(SkippedVotes skipped)
 		{
 
 			using (var connection = new DbManager(connectionName).Connection)

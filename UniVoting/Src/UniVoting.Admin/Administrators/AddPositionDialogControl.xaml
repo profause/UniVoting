@@ -17,14 +17,13 @@
             <TextBox Foreground="{DynamicResource PrimaryColorBrush}" Width="260" 
                      materialDesign:HintAssist.Hint="position" FontSize="24" Margin="10" 
                      Name="TextBoxPosition" TabIndex="0" VerticalAlignment="Center"
-                 Style="{StaticResource MaterialDesignFloatingHintTextBox}"  />
-
-            <ComboBox Foreground="{DynamicResource PrimaryColorBrush}" Width="260" DisplayMemberPath="PositionName"
+                 Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
+            <TextBox Foreground="{DynamicResource PrimaryColorBrush}" Width="260" 
                      materialDesign:HintAssist.Hint="faculty" FontSize="24" Margin="10" 
-                     Name="Faculty" TabIndex="0" VerticalAlignment="Center"
-                 Style="{StaticResource MaterialDesignFloatingHintComboBox}" SelectedValuePath="Id"  />
-
+                     Name="TextBoxFaculty" TabIndex="0" VerticalAlignment="Center"
+                 Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
         </StackPanel>
+
         <Button x:Name="BtnSave" Content="Save" Style="{DynamicResource MaterialDesignRaisedDarkButton}" Foreground="{DynamicResource WhiteColorBrush}" HorizontalAlignment="Right" Margin="20" Width="80" Height="40" Grid.Row="2"
                         Grid.Column="0" />
         <Button x:Name="BtnCancel" Content="Cancel" Style="{DynamicResource MaterialDesignRaisedDarkButton}" Foreground="{DynamicResource WhiteColorBrush}" HorizontalAlignment="Left" Margin="20" Width="80" Height="40" Grid.Row="2"

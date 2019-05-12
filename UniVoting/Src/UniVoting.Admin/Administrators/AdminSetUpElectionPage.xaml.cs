@@ -4,10 +4,8 @@ using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using Autofac;
-using Univoting.Services;
-using UniVoting.Admin.Startup;
-using UniVoting.Core;
+using UniVoting.Model;
+using UniVoting.Services;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace UniVoting.Admin.Administrators
@@ -17,16 +15,11 @@ namespace UniVoting.Admin.Administrators
 	/// </summary>
 	public partial class AdminSetUpElectionPage : Page
 	{
-		private IElectionConfigurationService _electionConfigurationService;
-		private Color _chosencolor;
-      private  IContainer _container;
-
-        public AdminSetUpElectionPage()
+		private System.Windows.Media.Color _chosencolor;
+		public AdminSetUpElectionPage()
 		{
-            InitializeComponent();
-           _container = new BootStrapper().BootStrap();
-
-            BtnUploadImage.Click += BtnUploadImage_Click;
+			InitializeComponent();
+			BtnUploadImage.Click += BtnUploadImage_Click;
 			Loaded += AdminSetUpElectionPage_Loaded;
 			Colorbox.GotFocus += Colorbox_GotFocus;
 			SaveElection.Click += SaveElection_Click;                                             
@@ -38,7 +31,7 @@ namespace UniVoting.Admin.Administrators
 				if (color.ShowDialog() != DialogResult.None)
 				{
 					Colorbox.Text = color.Color.Name;
-					_chosencolor = Color.FromRgb(color.Color.R, color.Color.G, color.Color.B);
+					_chosencolor = System.Windows.Media.Color.FromRgb(color.Color.R, color.Color.G, color.Color.B);
 					ColoView.Fill = new SolidColorBrush(_chosencolor);
 				}
 			}
@@ -47,12 +40,11 @@ namespace UniVoting.Admin.Administrators
 		{
 			if (
 				!string.IsNullOrWhiteSpace(TextBoxElectionName.Text)||!string.IsNullOrWhiteSpace(TextBoxElectionName.Text))
-            {
-                _electionConfigurationService = _container.Resolve<IElectionConfigurationService>();
-				await _electionConfigurationService.AddElectionConfigurationsAsync(new ElectionConfiguration
+			{
+				await ElectionConfigurationService.NewElection(new Setting
 				{
 					ElectionName = TextBoxElectionName.Text,
-					ElectionSubTitle = TextBoxSubtitle.Text,
+					EletionSubTitle = TextBoxSubtitle.Text,
 					Colour = string.Join(",", _chosencolor.R.ToString(), _chosencolor.G.ToString(), _chosencolor.B.ToString()),
 					Logo = Util.ConvertToBytes(Logo)
 

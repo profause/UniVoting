@@ -4,9 +4,8 @@ using System.Windows;
 using System.Windows.Controls;
 using MahApps.Metro.Controls;
 using MahApps.Metro.Controls.Dialogs;
-using UniVoting.Core;
-using Position = UniVoting.Core.Position;
-
+using UniVoting.Model;
+using Position = UniVoting.Model.Position;
 
 namespace UniVoting.Client
 {
@@ -38,10 +37,10 @@ namespace UniVoting.Client
         public CandidateControl(ConcurrentBag<Vote> votes, Position position, Candidate candidate, Voter voter)
         {
             InitializeComponent();
-            _votes = votes;
-            _position = position;
-            _candidate = candidate;
-            _voter = voter;
+            this._votes = votes;
+            this._position = position;
+            this._candidate = candidate;
+            this._voter = voter;
             Loaded += CandidateControl_Loaded;
             BtnVote.Click += BtnVote_Click;
 
@@ -94,7 +93,7 @@ namespace UniVoting.Client
 
         private async void BtnYesClick(object sender, RoutedEventArgs e)
         {
-            _votes.Add(new Vote { CandidateId = CandidateId, PositionId = _position.Id, VoterId = _voter.Id ,Time = DateTime.UtcNow});
+            _votes.Add(new Vote { CandidateId = CandidateId, PositionId = _position.Id, VoterId = _voter.Id });
             OnVoteCast(this);
             await _metroWindow.HideMetroDialogAsync(_customDialog);
 

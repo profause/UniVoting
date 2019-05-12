@@ -34,17 +34,14 @@ namespace UniVoting.Admin
 		}
 		public static void Clear(Visual myMainWindow)
 		{
-			var childrenCount = VisualTreeHelper.GetChildrenCount(myMainWindow);
+			int childrenCount = VisualTreeHelper.GetChildrenCount(myMainWindow);
 			for (int i = 0; i < childrenCount; i++)
 			{
 				var visualChild = (Visual)VisualTreeHelper.GetChild(myMainWindow, i);
-				if (visualChild is TextBox tb)
+				if (visualChild is TextBox)
 				{
-                    tb.Text = string.Empty;
-				}
-                if (visualChild is PasswordBox tb1)
-				{
-                    tb1.Password =string.Empty;
+					TextBox tb = (TextBox)visualChild;
+					tb.Text = "";
 				}
 				Clear(visualChild);
 			}
@@ -52,11 +49,11 @@ namespace UniVoting.Admin
 		}
 		public static System.Drawing.Image ConvertImage(BitmapImage img)
 		{
-			var ms = new MemoryStream();
-			var bbe = new BmpBitmapEncoder();
+			MemoryStream ms = new MemoryStream();
+			BmpBitmapEncoder bbe = new BmpBitmapEncoder();
 			bbe.Frames.Add(BitmapFrame.Create(img.UriSource));
 			bbe.Save(ms);
-			var img2 = System.Drawing.Image.FromStream(ms);
+			System.Drawing.Image img2 = System.Drawing.Image.FromStream(ms);
 			return img2;
 		}
 		public static Bitmap ResizeImage(System.Drawing.Image image, int width, int height)

@@ -9,7 +9,7 @@ namespace UniVoting.Admin.Administrators
         {
             InitializeComponent();
             WindowState=WindowState.Maximized;
-            ReportViewer1.ZoomMode=ZoomMode.PageWidth;
+            this.ReportViewer1.ZoomMode=ZoomMode.PageWidth;
         }
     }
 }

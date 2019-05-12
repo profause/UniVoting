@@ -1,0 +1,11 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:UniVoting.Admin.Properties">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/UniVoting.Admin;component/CustomAccents/CustomAccent.xaml"/>
+        <ResourceDictionary Source="/UniVoting.Admin;component/Administrators/Themes/OfficeBlack/System.Windows.xaml"/>
+        <ResourceDictionary Source="/UniVoting.Admin;component/Resources/Icons.xaml"/>
+        <ResourceDictionary Source="/UniVoting.Admin;component/Resources/IconsNonShared.xaml"/>
+    </ResourceDictionary.MergedDictionaries>
+
+</ResourceDictionary>

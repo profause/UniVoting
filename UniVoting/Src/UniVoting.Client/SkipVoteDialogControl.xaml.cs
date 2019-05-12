@@ -1,5 +1,5 @@
 ﻿using System.Windows.Controls;
-using UniVoting.Core;
+using UniVoting.Model;
 
 namespace UniVoting.Client
 {

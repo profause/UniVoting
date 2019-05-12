@@ -1,9 +1,8 @@
 ﻿using System.Windows;
 using MahApps.Metro.Controls;
 using MahApps.Metro.Controls.Dialogs;
-using Univoting.Services;
-using UniVoting.Admin.Startup;
-using UniVoting.Core;
+using UniVoting.Model;
+using UniVoting.Services;
 
 namespace UniVoting.Admin.Administrators
 {
@@ -12,18 +11,13 @@ namespace UniVoting.Admin.Administrators
 	/// </summary>
 	public partial class EcChairmanLoginWindow : MetroWindow
 	{
-		private readonly IElectionConfigurationService _electionConfigurationService;
-
-		public EcChairmanLoginWindow(IElectionConfigurationService electionConfigurationService)
+		public EcChairmanLoginWindow()
 		{
-            var container = new BootStrapper().BootStrap();
-            _electionConfigurationService = electionConfigurationService;
-
-            InitializeComponent();
+			InitializeComponent();
 			WindowState = WindowState.Maximized;
 			BtnLogin.IsDefault = true;
 			BtnLogin.Click += BtnLogin_Click;
-			//Username.Focus();
+			Username.Focus();
 		}
 
 		private async void BtnLogin_Click(object sender, RoutedEventArgs e)
@@ -31,7 +25,7 @@ namespace UniVoting.Admin.Administrators
 
 			if (!string.IsNullOrWhiteSpace(Username.Text) && !string.IsNullOrWhiteSpace(Password.Password))
 			{
-				var chairman = await _electionConfigurationService.LoginAsync(new Commissioner { UserName = Username.Text, Password = Password.Password, IsChairman = true });
+				var chairman = await ElectionConfigurationService.Login(new Comissioner { UserName = Username.Text, Password = Password.Password, IsChairman = true });
 				if (chairman != null)
 				{
 					new ReportViewerWindow().Show();

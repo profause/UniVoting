@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
-using Autofac;
 using MahApps.Metro.Controls;
-using UniVoting.Core;
-using UniVoting.LiveView.Startup;
+using UniVoting.Model;
 using UniVoting.Services;
-using Position = UniVoting.Core.Position;
+using Position = UniVoting.Model.Position;
 
 namespace UniVoting.LiveView
 {
@@ -15,18 +13,14 @@ namespace UniVoting.LiveView
     /// </summary>
     public partial class MainWindow : MetroWindow
 	{
-	    private readonly ILiveViewService _liveViewService;
-	    IEnumerable<Position> _positions;
-	   //readonly ILogger _logger;
+		IEnumerable<Position> _positions;
+	    readonly ILogger _logger;
 
         public MainWindow()
 		{
-		    InitializeComponent();
-
-		    var container = new BootStrapper().BootStrap();
-		    _liveViewService = container.Resolve<ILiveViewService>();
-			_positions = new List<Position>();
-            //_logger = new SystemEventLoggerService();
+			InitializeComponent();
+			_positions=new List<Position>();
+            _logger = new SystemEventLoggerService();
             Loaded += MainWindow_Loaded;
 		   
 		}
@@ -35,25 +29,25 @@ namespace UniVoting.LiveView
 		{
 		    try
 		    {
-		        _positions = await _liveViewService.Positions();
+		        _positions = await LiveViewService.Positions();
 
 		    }
-		    catch (SqlException )
+		    catch (SqlException exception)
 		    {
-		        //SystemEventLoggerService.Log(exception.StackTrace);
+		        SystemEventLoggerService.Log(exception.StackTrace);
 
 		    }
-		    catch (Exception )
+		    catch (Exception exception)
 		    {
-		        //_logger.Log(exception);
+		        _logger.Log(exception);
 
 		    }
 		    finally
 		    {
 		        foreach (var position in _positions)
 		        {
-		            CastedVotesHolder.Children.Add(new TileControlLarge(position, _liveViewService));
-		            SkippedVotesHolder.Children.Add(new TileControlSmall(position,_liveViewService));
+		            CastedVotesHolder.Children.Add(new TileControlLarge(position.PositionName?.Trim()));
+		            SkippedVotesHolder.Children.Add(new TileControlSmall(position.PositionName?.Trim()));
 		        }
             }
             

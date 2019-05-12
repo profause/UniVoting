@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using Autofac;
 using MahApps.Metro.Controls;
 using MahApps.Metro.Controls.Dialogs;
-using Univoting.Services;
-using UniVoting.Admin.Startup;
-using UniVoting.Core;
+using UniVoting.Model;
+using UniVoting.Services;
 
 namespace UniVoting.Admin.Administrators
 {
@@ -17,13 +15,10 @@ namespace UniVoting.Admin.Administrators
 	/// </summary>
 	public partial class AdminDispensePasswordWindow : MetroWindow
 	{
-		private readonly IElectionConfigurationService _electionConfigurationService;
 		private List<Voter> voters;
 		public AdminDispensePasswordWindow()
 		{
-		    var container = new BootStrapper().BootStrap();
-		    _electionConfigurationService = container.Resolve<IElectionConfigurationService>();
-            InitializeComponent();
+			InitializeComponent();
 			Loaded += AdminDispensePasswordWindow_Loaded;
 			StudentName.TextChanged += StudentName_TextChanged;
 			StudentsSearchList.MouseDoubleClick += StudentsSearchList_MouseDoubleClick;
@@ -37,7 +32,7 @@ namespace UniVoting.Admin.Administrators
 
 		private async void StudentsSearchList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
 		{
-			var metroWindow = (GetWindow(this) as MetroWindow);
+			var metroWindow = (Window.GetWindow(this) as MetroWindow);
 			var student = StudentsSearchList.SelectedItem as Voter;
 			if (student!=null)
 			{
@@ -66,7 +61,7 @@ namespace UniVoting.Admin.Administrators
 		private async void RefreshStudentList()
 		{
 			voters = new List<Voter>();
-		voters=(List<Voter>) await	_electionConfigurationService.GetAllVotersAsync();
+		voters=(List<Voter>) await	ElectionConfigurationService.GetAllVotersAsync();
 			StudentsSearchList.ItemsSource = voters;
 		}
 	}
